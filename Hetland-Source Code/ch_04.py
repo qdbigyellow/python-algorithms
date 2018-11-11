@@ -363,16 +363,49 @@ def test_naive_topsort():
     ['a', 'b', 'c', 'd', 'e', 'f']
     """
 
+# (1) 选择一个入度为0的顶点并输出之；
+# (2) 从网中删除此顶点及所有出边。
+# 循环结束后，若输出的顶点数小于网中的顶点数，则输出“有回路”信息，否则输出的顶点序列就是一种拓扑序列
 def naive_topsort(G, S=None):
     if S is None: S = set(G)                    # Default: All nodes
-    if len(S) == 1: return list(S)              # Base case, single node
+    if len(S) == 1: return list(S)              # Base case, single node. After recusion, will hit this line 
     v = S.pop()                                 # Reduction: Remove a node
     seq = naive_topsort(G, S)                   # Recursion (assumption), n-1
     min_i = 0
-    for i, u in enumerate(seq):
-        if v in G[u]: min_i = i+1               # After all dependencies
-    seq.insert(min_i, v)
+    for i, u in enumerate(seq):                 # enumerate(list) => counter(index), value
+        # print("[u] is {0}".format(u))
+        # print("g[u] is {0}".format(G[u]))
+        if v in G[u]: min_i = i+1               # After all dependencies. Count how many v in G[]
+    seq.insert(min_i, v)                        # list.insert(index, value)
+    print(seq)
     return seq
+
+def new_test_naive_topsort():
+    
+    n = 6
+    from random import sample, randrange, shuffle
+    from random import seed; seed(2365)
+    G = dict()
+    seq = list(range(n)) # Py 3 range objects aren't sequences
+    shuffle(seq)
+    rest = set(seq)
+    for x in seq[:-1]:
+        rest.remove(x)
+        m = randrange(1,len(rest)+1)
+        G[x] = set(sample(rest, m))
+    
+    G[seq[-1]] = set()
+    print(G)
+    sorted = naive_topsort(G)
+    print(sorted)
+    rest = set(sorted)
+    for u in sorted:
+        rest.remove(u)
+        assert G[u] <= rest
+    
+    G = {'a': set('bf'), 'b': set('cdf'),
+    'c': set('d'), 'd': set('ef'), 'e': set('f'), 'f': set()}
+    naive_topsort(G)
 
 def test_topsort():
     """
@@ -402,11 +435,11 @@ def test_topsort():
     """
 
 def topsort(G):
-    count = dict((u, 0) for u in G)             # The in-degree for each node
+    count = dict((u, 0) for u in G)             # The in-degree for each node, get all node name, and value is 0
     for u in G:
         for v in G[u]:
-            count[v] += 1                       # Count every in-edge
-    Q = [u for u in G if count[u] == 0]         # Valid initial nodes
+            count[v] += 1                       # Count every in-edge, get the number of edge of each node
+    Q = [u for u in G if count[u] == 0]         # Valid initial nodes, Find the node without inward edge
     S = []                                      # The result
     while Q:                                    # While we have start nodes...
         u = Q.pop()                             # Pick one
@@ -414,8 +447,11 @@ def topsort(G):
         for v in G[u]:
             count[v] -= 1                       # "Uncount" its out-edges
             if count[v] == 0:                   # New valid start nodes?
-                Q.append(v)                     # Deal with them next
+                Q.append(v)                     # Deal with them next, there must be one is zero in-edge now.
     return S
+
+G = {'a': set('bf'), 'b': set('cdf'),'c': set('d'), 'd': set('ef'), 'e': set('f'), 'f': set()}
+topsort(G)
 
 def test_relax():
     """
